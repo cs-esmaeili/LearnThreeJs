@@ -12,8 +12,8 @@ const cursor = {
 }
 
 window.addEventListener("mousemove", (event) => {
-    cursor.x = event.clientX  / sizes.width;
-    cursor.y = event.clientX  / sizes.height;
+    cursor.x = event.clientX / sizes.width - 0.5;
+    cursor.y = -(event.clientY / sizes.height - 0.5);
 });
 
 const canvas = document.querySelector("canvas.webgl");
@@ -68,7 +68,12 @@ const tick = () => {
 
     const elapsedTime = clock.getElapsedTime();
 
-    group.rotation.y = elapsedTime;
+    // group.rotation.y = elapsedTime;
+    camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 6;
+    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 6;
+    camera.position.y = cursor.y * 6;
+
+    camera.lookAt(group.position);
 
     renderer.render(scene, camera);
 
