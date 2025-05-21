@@ -1,83 +1,108 @@
+// 1. Imports
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
+import GUI from 'lil-gui';
 
-const sizes = {
-    width: 800,
-    height: 600
+
+const gui = new GUI();
+const debugObject = {
+
 }
 
+
+// 2. DOM & Sizes
+const canvas = document.querySelector("canvas.webgl");
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+};
 const cursor = {
     x: 0,
     y: 0
+};
+
+// 3. Scene
+const scene = new THREE.Scene();
+
+// 4. Geometry & Object
+const positionsArray = new Float32Array([
+    0, 0, 0,
+    0, 1, 0,
+    1, 1, 0
+]);
+const positionAttribute = new THREE.BufferAttribute(positionsArray, 3);
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute('position', positionAttribute);
+
+debugObject.color = '#d26256';
+const matrial = new THREE.MeshBasicMaterial({ color: debugObject.color, side: THREE.DoubleSide });
+const mesh = new THREE.Mesh(geometry, matrial);
+scene.add(mesh);
+
+gui.add(mesh.position, 'y').min(-3).max(3).step(0.01).name("y axis");
+gui.add(mesh, 'visible');
+gui.add(matrial, 'wireframe');
+gui.addColor(debugObject, 'color').onChange((color) => {
+    matrial.color.set(debugObject.color);
+});
+
+debugObject.spin = () => {
+    gsap.to(mesh.rotation, { y: mesh.rotation.y + Math.PI * 2 })
 }
+gui.add(debugObject, 'spin');
+
+// Axes helper
+const axesHelper = new THREE.AxesHelper(2);
+scene.add(axesHelper);
+
+// 5. Camera
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
+camera.position.z = 5;
+scene.add(camera);
+
+// 6. Controls
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+// 7. Renderer
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.setSize(sizes.width, sizes.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// 8. Event Listeners
+window.addEventListener('resize', () => {
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
+
+    camera.aspect = sizes.width / sizes.height;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
 
 window.addEventListener("mousemove", (event) => {
     cursor.x = event.clientX / sizes.width - 0.5;
     cursor.y = -(event.clientY / sizes.height - 0.5);
 });
 
-const canvas = document.querySelector("canvas.webgl");
+// window.addEventListener("dblclick", () => {
+//     if (!document.fullscreenElement) {
+//         canvas.requestFullscreen();
+//     } else {
+//         document.exitFullscreen();
+//     }
+// });
 
-const scene = new THREE.Scene();
-const group = new THREE.Group();
-group.position.y = 1;
-scene.add(group);
-
-
-const cub1 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: "blue" })
-)
-group.add(cub1);
-
-const cub2 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: "red" })
-)
-cub2.position.x = -2;
-group.add(cub2);
-
-const cub3 = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: "gray" })
-)
-cub3.position.x = 2;
-group.add(cub3);
-
-const axesHelper = new THREE.AxesHelper(2);
-scene.add(axesHelper);
-
-
-
-
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
-camera.position.z = 5;
-scene.add(camera);
-
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
-})
-
-renderer.setSize(sizes.width, sizes.height);
-
+// 9. Animation Loop
 const clock = new THREE.Clock();
-
-// gsap.to(group.position, { delay: 1, duration: 1, x: 2 })
-
 const tick = () => {
-
     const elapsedTime = clock.getElapsedTime();
 
-    // group.rotation.y = elapsedTime;
-    camera.position.x = Math.sin(cursor.x * Math.PI * 2) * 6;
-    camera.position.z = Math.cos(cursor.x * Math.PI * 2) * 6;
-    camera.position.y = cursor.y * 6;
-
-    camera.lookAt(group.position);
-
+    controls.update();
     renderer.render(scene, camera);
 
     window.requestAnimationFrame(tick);
-}
+};
 tick();
-
