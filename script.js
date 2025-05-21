@@ -5,11 +5,15 @@ import gsap from 'gsap';
 import GUI from 'lil-gui';
 
 
-const gui = new GUI();
-const debugObject = {
+const gui = new GUI({
+    width: 300,
+    title: 'Nice ui',
+    closeFolders: true
+});
+gui.close();
+gui.hide();
 
-}
-
+const debugObject = {}
 
 // 2. DOM & Sizes
 const canvas = document.querySelector("canvas.webgl");
@@ -25,32 +29,38 @@ const cursor = {
 // 3. Scene
 const scene = new THREE.Scene();
 
-// 4. Geometry & Object
-const positionsArray = new Float32Array([
-    0, 0, 0,
-    0, 1, 0,
-    1, 1, 0
-]);
-const positionAttribute = new THREE.BufferAttribute(positionsArray, 3);
-const geometry = new THREE.BufferGeometry();
-geometry.setAttribute('position', positionAttribute);
 
 debugObject.color = '#d26256';
-const matrial = new THREE.MeshBasicMaterial({ color: debugObject.color, side: THREE.DoubleSide });
+const matrial = new THREE.MeshBasicMaterial({ color: debugObject.color, wireframe: true });
+const geometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
 const mesh = new THREE.Mesh(geometry, matrial);
 scene.add(mesh);
 
-gui.add(mesh.position, 'y').min(-3).max(3).step(0.01).name("y axis");
-gui.add(mesh, 'visible');
-gui.add(matrial, 'wireframe');
-gui.addColor(debugObject, 'color').onChange((color) => {
+const cubTweaks = gui.addFolder('Cube Folder');
+cubTweaks.close();
+
+cubTweaks.add(mesh.position, 'y').min(-3).max(3).step(0.01).name("y axis");
+cubTweaks.add(mesh, 'visible');
+cubTweaks.add(matrial, 'wireframe');
+cubTweaks.addColor(debugObject, 'color').onChange((color) => {
     matrial.color.set(debugObject.color);
 });
 
 debugObject.spin = () => {
     gsap.to(mesh.rotation, { y: mesh.rotation.y + Math.PI * 2 })
 }
-gui.add(debugObject, 'spin');
+cubTweaks.add(debugObject, 'spin');
+
+
+debugObject.subdivision = 2;
+cubTweaks.add(debugObject, 'subdivision').min(1).max(20).step(1).onFinishChange(() => {
+    mesh.geometry.dispose();
+    mesh.geometry = new THREE.BoxGeometry(
+        1, 1, 1,
+        debugObject.subdivision, debugObject.subdivision, debugObject.subdivision
+    );
+});
+
 
 // Axes helper
 const axesHelper = new THREE.AxesHelper(2);
@@ -94,6 +104,17 @@ window.addEventListener("mousemove", (event) => {
 //         document.exitFullscreen();
 //     }
 // });
+
+window.addEventListener('keydown', (event) => {
+    if (event.key == 'h') {
+        if (gui._hidden) {
+            gui.show();
+        } else {
+            gui.hide();
+        }
+    }
+})
+
 
 // 9. Animation Loop
 const clock = new THREE.Clock();
