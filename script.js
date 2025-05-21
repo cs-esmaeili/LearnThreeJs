@@ -5,6 +5,16 @@ import gsap from 'gsap';
 import GUI from 'lil-gui';
 
 
+
+const image = new Image();
+const texture = new THREE.Texture(image);
+
+image.onload = () => {
+    texture.needsUpdate = true;
+}
+image.src = '/textures/door/color.jpg';
+
+
 const gui = new GUI({
     width: 300,
     title: 'Nice ui',
@@ -31,7 +41,8 @@ const scene = new THREE.Scene();
 
 
 debugObject.color = '#d26256';
-const matrial = new THREE.MeshBasicMaterial({ color: debugObject.color, wireframe: true });
+// const matrial = new THREE.MeshBasicMaterial({ color: debugObject.color, wireframe: true });
+const matrial = new THREE.MeshBasicMaterial({ map: texture });
 const geometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
 const mesh = new THREE.Mesh(geometry, matrial);
 scene.add(mesh);
